@@ -19,6 +19,30 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
   const { login, register, loading } = useAuth();
   const { t } = useLanguage();
 
+  const getErrorMessage = (error: any) => {
+    if (error?.code) {
+      switch (error.code) {
+        case 'auth/invalid-credential':
+          return 'Invalid email or password. Please check your credentials and try again.';
+        case 'auth/user-not-found':
+          return 'No account found with this email address. Please sign up or check your email.';
+        case 'auth/wrong-password':
+          return 'Incorrect password. Please try again.';
+        case 'auth/email-already-in-use':
+          return 'An account with this email already exists. Please sign in instead.';
+        case 'auth/weak-password':
+          return 'Password should be at least 6 characters long.';
+        case 'auth/invalid-email':
+          return 'Please enter a valid email address.';
+        case 'auth/too-many-requests':
+          return 'Too many failed attempts. Please try again later.';
+        default:
+          return error.message || 'An error occurred. Please try again.';
+      }
+    }
+    return error.message || 'An error occurred. Please try again.';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -32,7 +56,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
       onClose();
     } catch (error: any) {
       console.error('Auth error:', error);
-      setError(error.message || 'An error occurred. Please try again.');
+      setError(getErrorMessage(error));
     }
   };
 
@@ -62,8 +86,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
 
           {/* Error Message */}
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center">
-              <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start">
+              <AlertCircle className="w-5 h-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
               <span className="text-red-700 text-sm">{error}</span>
             </div>
           )}
