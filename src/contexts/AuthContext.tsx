@@ -101,31 +101,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (name: string, email: string, password: string) => {
     setLoading(true);
     try {
-      // First, create the auth user without metadata
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // Create the auth user with name in metadata for the database trigger
+      const { error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            name: name,
+          },
+        },
       });
       
-      if (authError) throw authError;
-      
-      // If user was created successfully, create the profile
-      if (authData.user) {
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert({
-            id: authData.user.id,
-            email: authData.user.email,
-            name: name,
-            is_premium: false,
-          });
-        
-        if (profileError) {
-          console.error('Error creating user profile:', profileError);
-          // Don't throw here as the auth user was created successfully
-          // The profile will be created by the database trigger if it exists
-        }
-      }
+      if (error) throw error;
     } catch (error) {
       throw error;
     } finally {
