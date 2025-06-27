@@ -20,27 +20,26 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
   const { t } = useLanguage();
 
   const getErrorMessage = (error: any) => {
-    if (error?.code) {
-      switch (error.code) {
-        case 'auth/invalid-credential':
-          return 'Invalid email or password. Please check your credentials and try again.';
-        case 'auth/user-not-found':
-          return 'No account found with this email address. Please sign up or check your email.';
-        case 'auth/wrong-password':
-          return 'Incorrect password. Please try again.';
-        case 'auth/email-already-in-use':
-          return 'An account with this email already exists. Please sign in instead.';
-        case 'auth/weak-password':
-          return 'Password should be at least 6 characters long.';
-        case 'auth/invalid-email':
-          return 'Please enter a valid email address.';
-        case 'auth/too-many-requests':
-          return 'Too many failed attempts. Please try again later.';
-        default:
-          return error.message || 'An error occurred. Please try again.';
+    if (error?.message) {
+      // Supabase error messages
+      if (error.message.includes('Invalid login credentials')) {
+        return 'Invalid email or password. Please check your credentials and try again.';
       }
+      if (error.message.includes('User already registered')) {
+        return 'An account with this email already exists. Please sign in instead.';
+      }
+      if (error.message.includes('Password should be at least')) {
+        return 'Password should be at least 6 characters long.';
+      }
+      if (error.message.includes('Invalid email')) {
+        return 'Please enter a valid email address.';
+      }
+      if (error.message.includes('Email not confirmed')) {
+        return 'Please check your email and click the confirmation link before signing in.';
+      }
+      return error.message;
     }
-    return error.message || 'An error occurred. Please try again.';
+    return 'An error occurred. Please try again.';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -158,7 +157,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
               disabled={loading}
               className="w-full bg-primary-600 text-white py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? t('common.loading') : (isLogin ? 'Sign In' : 'Create Account')}
+              {loading ? (t ? t('common.loading') : 'Loading...') : (isLogin ? 'Sign In' : 'Create Account')}
             </button>
           </form>
 
