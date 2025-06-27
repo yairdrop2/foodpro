@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChefHat, Search, User, Crown, Globe, Menu, X } from 'lucide-react';
+import { ChefHat, Search, User, Crown, Globe, Menu, X, Plus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import AuthModal from './AuthModal';
 
 const Header: React.FC = () => {
-  const { user, logout, loading } = useAuth();
+  const { user, userProfile, logout, loading } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -43,6 +43,12 @@ const Header: React.FC = () => {
               <Link to="/recipes" className="text-gray-700 hover:text-primary-600 transition-colors font-medium">
                 {t('nav.recipes')}
               </Link>
+              {user && (
+                <Link to="/create-recipe" className="text-gray-700 hover:text-primary-600 transition-colors font-medium flex items-center space-x-1">
+                  <Plus className="w-4 h-4" />
+                  <span>Create Recipe</span>
+                </Link>
+              )}
               <Link to="/premium" className="text-gray-700 hover:text-primary-600 transition-colors font-medium flex items-center space-x-1">
                 <Crown className="w-4 h-4" />
                 <span>{t('nav.premium')}</span>
@@ -76,18 +82,14 @@ const Header: React.FC = () => {
                   <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
                 ) : user ? (
                   <div className="flex items-center space-x-3">
-                    {user.isPremium && (
+                    {userProfile?.is_premium && (
                       <span className="bg-gradient-to-r from-accent-400 to-accent-500 px-2 py-1 rounded-full text-xs font-semibold text-white">
                         Premium
                       </span>
                     )}
                     <Link to="/profile" className="flex items-center space-x-2 text-gray-700 hover:text-primary-600 transition-colors">
-                      {user.avatar ? (
-                        <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full object-cover" />
-                      ) : (
-                        <User className="w-5 h-5" />
-                      )}
-                      <span className="hidden md:block font-medium">{user.name}</span>
+                      <User className="w-5 h-5" />
+                      <span className="hidden md:block font-medium">{userProfile?.name || user.email}</span>
                     </Link>
                     <button
                       onClick={handleAuthClick}
@@ -134,6 +136,16 @@ const Header: React.FC = () => {
                 >
                   {t('nav.recipes')}
                 </Link>
+                {user && (
+                  <Link 
+                    to="/create-recipe" 
+                    className="text-gray-700 hover:text-primary-600 transition-colors font-medium flex items-center space-x-1"
+                    onClick={() => setShowMobileMenu(false)}
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Create Recipe</span>
+                  </Link>
+                )}
                 <Link 
                   to="/premium" 
                   className="text-gray-700 hover:text-primary-600 transition-colors font-medium flex items-center space-x-1"
