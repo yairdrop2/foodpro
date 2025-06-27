@@ -7,7 +7,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables. Please check your .env file.');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(https://fkqkgjumzjkfikanhrah.supabase.co, eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZrcWtnanVtemprZmlrYW5ocmFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA3Nzg4NzcsImV4cCI6MjA2NjM1NDg3N30.5lTT6aTSRKAS-G5Oni-gjJ7M6Rp9ZYWOmuGw2yixFZQ );
 
 // Database types
 export interface User {
