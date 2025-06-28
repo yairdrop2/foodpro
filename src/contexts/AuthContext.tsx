@@ -1,16 +1,16 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '../config/supabase';
-import type { User, Session } from '@supabase/supabase-js';
+import { User as FirebaseUser } from 'firebase/auth';
+import { authService, UserProfile } from '../services/authService';
 
 interface AuthContextType {
-  user: User | null;
-  session: Session | null;
+  user: FirebaseUser | null;
+  userProfile: UserProfile | null;
   loading: boolean;
-  userProfile: any;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  updateProfile: (data: { name?: string; is_premium?: boolean }) => Promise<void>;
+  updateProfile: (data: { name?: string; isPremium?: boolean }) => Promise<void>;
+  upgradeToPremium: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,54 +24,17 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [userProfile, setUserProfile] = useState<any>(null);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .single();
-      
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching user profile:', error);
-        return null;
-      }
-      
-      return data;
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-      return null;
-    }
-  };
-
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    const unsubscribe = authService.onAuthStateChanged(async (firebaseUser) => {
+      setUser(firebaseUser);
       
-      if (session?.user) {
-        const profile = await fetchUserProfile(session.user.id);
-        setUserProfile(profile);
-      }
-      
-      setLoading(false);
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        const profile = await fetchUserProfile(session.user.id);
+      if (firebaseUser) {
+        // Get user profile from Firestore
+        const profile = await authService.getUserProfile(firebaseUser.uid);
         setUserProfile(profile);
       } else {
         setUserProfile(null);
@@ -80,17 +43,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return unsubscribe;
   }, []);
 
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) throw error;
+      const profile = await authService.signIn(email, password);
+      setUserProfile(profile);
     } catch (error) {
       throw error;
     } finally {
@@ -101,18 +61,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (name: string, email: string, password: string) => {
     setLoading(true);
     try {
-      // Create the auth user with name in metadata for the database trigger
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name: name,
-          },
-        },
-      });
-      
-      if (error) throw error;
+      const profile = await authService.register(email, password, name);
+      setUserProfile(profile);
     } catch (error) {
       throw error;
     } finally {
@@ -123,8 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      await authService.signOut();
       setUserProfile(null);
     } catch (error) {
       throw error;
@@ -133,20 +82,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const updateProfile = async (data: { name?: string; is_premium?: boolean }) => {
+  const updateProfile = async (data: { name?: string; isPremium?: boolean }) => {
     if (!user) throw new Error('No user logged in');
     
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('users')
-        .update(data)
-        .eq('id', user.id);
-      
-      if (error) throw error;
+      if (data.isPremium !== undefined) {
+        await authService.updatePremiumStatus(user.uid, data.isPremium);
+      }
       
       // Refresh the user profile
-      const updatedProfile = await fetchUserProfile(user.id);
+      const updatedProfile = await authService.getUserProfile(user.uid);
       setUserProfile(updatedProfile);
     } catch (error) {
       throw error;
@@ -155,15 +101,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const upgradeToPremium = async () => {
+    if (!user) throw new Error('No user logged in');
+    
+    try {
+      await authService.updatePremiumStatus(user.uid, true);
+      const updatedProfile = await authService.getUserProfile(user.uid);
+      setUserProfile(updatedProfile);
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const value = {
     user,
-    session,
     userProfile,
     loading,
     login,
     register,
     logout,
     updateProfile,
+    upgradeToPremium,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import { Crown, Check, Bot, Video, Star, Zap, Users, Award, CreditCard } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { paymentService } from '../services/paymentService';
 
 const PremiumPage: React.FC = () => {
-  const { user, upgradeToPremium } = useAuth();
+  const { user, userProfile, upgradeToPremium } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('annual');
 
   const features = [
     {
@@ -22,7 +20,7 @@ const PremiumPage: React.FC = () => {
     {
       icon: <Bot className="w-6 h-6" />,
       title: 'AI Cooking Assistant',
-      description: 'Personal AI chef powered by Gemini AI for recipe suggestions and cooking tips'
+      description: 'Personal AI chef for recipe suggestions and cooking tips'
     },
     {
       icon: <Zap className="w-6 h-6" />,
@@ -91,8 +89,6 @@ const PremiumPage: React.FC = () => {
 
     setLoading(true);
     try {
-      // For demo purposes, we'll simulate the upgrade
-      // In production, this would integrate with Stripe
       await upgradeToPremium();
       alert(`Successfully upgraded to ${planType} plan! Welcome to Food Pro Premium! 🎉`);
     } catch (error) {
@@ -103,7 +99,7 @@ const PremiumPage: React.FC = () => {
     }
   };
 
-  if (user?.isPremium) {
+  if (userProfile?.isPremium) {
     return (
       <div className="min-h-screen bg-gray-50 py-12">
         <div className="container mx-auto px-4 text-center">
@@ -145,7 +141,7 @@ const PremiumPage: React.FC = () => {
             Unlock Premium Recipes
           </h1>
           <p className="text-xl md:text-2xl mb-8 opacity-90 max-w-3xl mx-auto">
-            Access exclusive chef recipes, HD video tutorials, and AI-powered cooking assistance with Gemini AI
+            Access exclusive chef recipes, HD video tutorials, and AI-powered cooking assistance
           </p>
           <div className="flex items-center justify-center gap-8 text-sm">
             <div className="flex items-center">
@@ -158,7 +154,7 @@ const PremiumPage: React.FC = () => {
             </div>
             <div className="flex items-center">
               <Bot className="w-5 h-5 mr-2 text-accent-400" />
-              <span>Powered by Gemini AI</span>
+              <span>AI Powered</span>
             </div>
           </div>
         </div>
@@ -201,7 +197,7 @@ const PremiumPage: React.FC = () => {
               Choose Your Plan
             </h2>
             <p className="text-xl text-gray-600">
-              Start your premium cooking journey today with secure Stripe payments
+              Start your premium cooking journey today
             </p>
           </div>
 
@@ -243,7 +239,7 @@ const PremiumPage: React.FC = () => {
                   } disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   <CreditCard className="w-5 h-5 mr-2" />
-                  {loading ? 'Processing...' : 'Start Free Trial'}
+                  {loading ? 'Processing...' : 'Upgrade Now'}
                 </button>
 
                 <div className="mt-8 space-y-4">
@@ -260,7 +256,7 @@ const PremiumPage: React.FC = () => {
 
           <div className="text-center mt-12">
             <p className="text-gray-600">
-              30-day money-back guarantee • Cancel anytime • Secure payments with Stripe
+              30-day money-back guarantee • Cancel anytime
             </p>
           </div>
         </div>
@@ -318,7 +314,7 @@ const PremiumPage: React.FC = () => {
             className="bg-accent-500 text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-accent-600 transition-colors shadow-lg disabled:opacity-50 flex items-center justify-center mx-auto"
           >
             <CreditCard className="w-5 h-5 mr-2" />
-            {loading ? 'Processing...' : 'Start Free Trial'}
+            {loading ? 'Processing...' : 'Upgrade to Premium'}
           </button>
         </div>
       </section>
